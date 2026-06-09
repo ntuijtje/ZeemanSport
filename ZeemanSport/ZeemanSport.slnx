@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="ZeemanSport.API/ZeemanSport.API.csproj" Id="d1ed779d-9dde-484a-b016-8d6eafab46f1" />
+  <Project Path="ZeemanSport.BlazorWasm/ZeemanSport.BlazorWasm.csproj" Id="03ffb43f-ca78-4759-94e0-f67848d5d9ef" />
+  <Project Path="ZeemanSport.Core/ZeemanSport.Core.csproj" Id="cf64f3ed-e148-4d17-ad63-d924e2632a00" />
+  <Project Path="ZeemanSport.MauiApp/ZeemanSport.MauiApp.csproj" Id="77f0b6fe-fe8a-4c3e-8642-78cdb1f959d6">
+    <Deploy Solution="Debug|*" />
+  </Project>
+  <Project Path="ZeemanSport.Runtime/ZeemanSport.Runtime.csproj" Id="9782bb8e-b463-4ad6-ba1e-33147c88c144" />
+</Solution>

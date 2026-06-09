@@ -1,0 +1,6 @@
+@ZeemanSport.API_HostAddress = http://localhost:5161
+
+GET {{ZeemanSport.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
