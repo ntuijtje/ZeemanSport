@@ -1,13 +1,19 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>a3823ef0-df26-4a9f-ba28-5d64d74f5142</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ZeemanSport.Core\ZeemanSport.Core.csproj" />
+    <ProjectReference Include="..\ZeemanSport.Runtime\ZeemanSport.Runtime.csproj" />
   </ItemGroup>
 
 </Project>
