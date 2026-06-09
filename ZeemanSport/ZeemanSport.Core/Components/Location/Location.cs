@@ -75,10 +75,14 @@ namespace ZeemanSport.Core.Location
 
         #endregion
 
-        public void SetId(int Id)
+        #region Methods
+
+        public void SetId(int id)
         {
             if (_id == 0)
-                _id = Id;
+                _id = id;
         }
+
+        #endregion
     }
 }
