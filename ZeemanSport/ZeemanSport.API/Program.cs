@@ -1,8 +1,10 @@
 using Npgsql;
 using System.Text.Json.Serialization;
+using ZeemanSport.Core.Location;
 using ZeemanSport.Core.User;
+using ZeemanSport.Core.Workout;
 using ZeemanSport.Runtime.Repositories;
-using ZeemanSport.Runtime.Services.UserService;
+using ZeemanSport.Runtime.Services;
 
 namespace ZeemanSport.API
 {
@@ -10,7 +12,7 @@ namespace ZeemanSport.API
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
@@ -30,21 +32,25 @@ namespace ZeemanSport.API
                 return dataSourceBuilder.Build();
             });
 
-            builder.Services.AddScoped<IUserService, UserService>();
+            //Repositories
+            builder.Services.AddSingleton<ILocationRepository, LocationRepository>();
             builder.Services.AddSingleton<IUserRepository, UserRepository>();
+            builder.Services.AddSingleton<IWorkoutRepository, WorkoutRepository>();
 
-            var app = builder.Build();
+            //Services
+            builder.Services.AddScoped<ILocationService, LocationService>();
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IWorkoutService, WorkoutService>();
+
+            WebApplication app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
-            {
                 app.MapOpenApi();
-            }
 
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 

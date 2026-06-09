@@ -4,7 +4,7 @@ using System.Text;
 using ZeemanSport.Core.Contracts.User;
 using ZeemanSport.Core.User;
 
-namespace ZeemanSport.Runtime.Services.UserService
+namespace ZeemanSport.Runtime.Services
 {
     public class UserService : IUserService
     {
@@ -27,7 +27,7 @@ namespace ZeemanSport.Runtime.Services.UserService
             if (!passwordIsValid)
                 return null;
 
-            return MapToResponse(user);
+            return mapToResponse(user);
         }
 
         public async Task<UserResponse> RegisterAsync(RegisterUserRequest request)
@@ -42,7 +42,7 @@ namespace ZeemanSport.Runtime.Services.UserService
 
             User savedUser = await _userRepository.CreateAsync(user, request.Password ?? string.Empty);
 
-            return MapToResponse(savedUser);
+            return mapToResponse(savedUser);
         }
 
         public async Task<UserResponse?> GetAsync(int id)
@@ -52,7 +52,7 @@ namespace ZeemanSport.Runtime.Services.UserService
             if (user == null)
                 return null;
 
-            return MapToResponse(user);
+            return mapToResponse(user);
         }
 
         public async Task<UserResponse?> UpdateAsync(int id, UpdateUserRequest request)
@@ -69,10 +69,10 @@ namespace ZeemanSport.Runtime.Services.UserService
 
             User updatedUser = await _userRepository.UpdateAsync(existingUser);
 
-            return MapToResponse(updatedUser);
+            return mapToResponse(updatedUser);
         }
 
-        private static UserResponse MapToResponse(User user)
+        private static UserResponse mapToResponse(User user)
         {
             return new UserResponse
             {

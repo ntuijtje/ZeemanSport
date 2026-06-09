@@ -97,24 +97,14 @@ namespace ZeemanSport.Runtime.Repositories
             User user = new User
             {
                 UserName = reader.GetString(reader.GetOrdinal("user_name")),
-                FirstName = ReadNullableString(reader, "first_name"),
-                LastName = ReadNullableString(reader, "last_name"),
+                FirstName = DataReaderHelper.ReadNullableString(reader, "first_name"),
+                LastName = DataReaderHelper.ReadNullableString(reader, "last_name"),
                 UserRole = (UserRole)reader.GetInt32(reader.GetOrdinal("user_role"))
             };
 
             user.SetId(reader.GetInt32(reader.GetOrdinal("id")));
 
             return user;
-        }
-
-        private static string? ReadNullableString(NpgsqlDataReader reader, string columnName)
-        {
-            int ordinal = reader.GetOrdinal(columnName);
-
-            if (reader.IsDBNull(ordinal)) 
-                return null;
-
-            return reader.GetString(ordinal);
         }
     }
 }
