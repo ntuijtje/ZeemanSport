@@ -1,16 +1,20 @@
-﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@inherits LayoutComponentBase
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+<div class="zs-page">
+    <header class="zs-header">
+        <div class="zs-header-inner">
+            <a class="zs-brand" href="">
+                <img src="images/logo.png" alt="ZeemanSport Sportclub" />
+            </a>
+            <NavMenu />
         </div>
+    </header>
 
-        <article class="content px-4">
-            @Body
-        </article>
+    <main class="zs-main">
+        @Body
     </main>
+
+    <footer class="zs-footer">
+        &copy; @DateTime.Now.Year ZeemanSport Sportclub &mdash; powering your workout.
+    </footer>
 </div>

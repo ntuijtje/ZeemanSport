@@ -1,0 +1,112 @@
+@page "/admin/members"
+@inject UserApiClient UserClient
+@inject SubscriptionApiClient SubscriptionClient
+
+<PageTitle>Members &mdash; ZeemanSport admin</PageTitle>
+
+<div class="zs-section-title">
+    <h1>Members</h1>
+</div>
+<p class="text-muted">All registered users and the status of their membership.</p>
+
+@if (_error != null)
+{
+    <div class="zs-alert zs-alert-error">@_error</div>
+}
+else if (_rows == null)
+{
+    <p class="zs-empty">Loading members&hellip;</p>
+}
+else
+{
+    <table class="zs-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Subscription</th>
+                <th>Status</th>
+                <th>Runs until</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (MemberRow row in _rows)
+            {
+                <tr>
+                    <td><strong>@row.User.FirstName @row.User.LastName</strong></td>
+                    <td>@row.User.UserName</td>
+                    <td>@row.User.UserRole</td>
+                    <td>@(row.ActiveSubscription?.PlanName ?? "—")</td>
+                    <td>
+                        @if (row.ActiveSubscription != null)
+                        {
+                            <span class="zs-badge zs-badge-blue">Active</span>
+                        }
+                        else if (row.User.UserRole == UserRole.Member)
+                        {
+                            <span class="zs-badge zs-badge-grey">No active plan</span>
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
+                    </td>
+                    <td>@(row.ActiveSubscription?.EndDate.ToString("d MMM yyyy") ?? "—")</td>
+                </tr>
+            }
+            @if (_rows.Count == 0)
+            {
+                <tr><td colspan="6" class="zs-empty">No users yet.</td></tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<MemberRow>? _rows;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            IReadOnlyList<UserResponse> users = await UserClient.GetAllAsync();
+            List<MemberRow> rows = new();
+
+            foreach (UserResponse user in users)
+            {
+                SubscriptionResponse? active = null;
+
+                if (user.UserRole == UserRole.Member)
+                {
+                    IReadOnlyList<SubscriptionResponse> subscriptions = await SubscriptionClient.GetForUserAsync(user.Id);
+                    active = subscriptions.FirstOrDefault(IsActive);
+                }
+
+                rows.Add(new MemberRow { User = user, ActiveSubscription = active });
+            }
+
+            _rows = rows;
+        }
+        catch (Exception exception)
+        {
+            _error = $"Could not reach the API. Is it running? ({exception.Message})";
+        }
+    }
+
+    private static bool IsActive(SubscriptionResponse subscription)
+    {
+        DateTime today = DateTime.Today;
+
+        return subscription.Status == SubscriptionStatus.Active
+            && subscription.StartDate.Date <= today
+            && subscription.EndDate.Date >= today;
+    }
+
+    private class MemberRow
+    {
+        public required UserResponse User { get; set; }
+        public SubscriptionResponse? ActiveSubscription { get; set; }
+    }
+}

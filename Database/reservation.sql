@@ -234,13 +234,13 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION dbo.usp_get_waitlist(p_session_id integer)
-RETURNS TABLE(id integer, session_id integer, user_id integer, position integer, created_at timestamp)
+RETURNS TABLE(id integer, session_id integer, user_id integer, queue_position integer, created_at timestamp)
 LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
     SELECT we.id, we.session_id, we.user_id,
-           (row_number() OVER (ORDER BY we.created_at, we.id))::integer AS position,
+           (row_number() OVER (ORDER BY we.created_at, we.id))::integer AS queue_position,
            we.created_at
     FROM dbo.waitlist_entries we
     WHERE we.session_id = p_session_id
@@ -249,19 +249,19 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION dbo.usp_get_waitlist_entry(p_session_id integer, p_user_id integer)
-RETURNS TABLE(id integer, session_id integer, user_id integer, position integer, created_at timestamp)
+RETURNS TABLE(id integer, session_id integer, user_id integer, queue_position integer, created_at timestamp)
 LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
-    SELECT we.id, we.session_id, we.user_id, we.position, we.created_at
+    SELECT we.id, we.session_id, we.user_id, we.queue_position, we.created_at
     FROM dbo.usp_get_waitlist(p_session_id) we
     WHERE we.user_id = p_user_id;
 END;
 $$;
 
 CREATE OR REPLACE FUNCTION dbo.usp_add_waitlist(p_session_id integer, p_user_id integer)
-RETURNS TABLE(id integer, session_id integer, user_id integer, position integer, created_at timestamp)
+RETURNS TABLE(id integer, session_id integer, user_id integer, queue_position integer, created_at timestamp)
 LANGUAGE plpgsql
 AS $$
 BEGIN

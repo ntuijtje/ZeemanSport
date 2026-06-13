@@ -1,0 +1,81 @@
+@page "/subscriptions"
+@inject SubscriptionApiClient SubscriptionClient
+@inject NavigationManager Navigation
+
+<PageTitle>Subscriptions &mdash; ZeemanSport</PageTitle>
+
+<div class="zs-section-title">
+    <h1>Subscriptions</h1>
+</div>
+<p class="text-muted">
+    Choose the membership that suits you. Pay monthly and stay flexible, or pay yearly and save.
+</p>
+
+@if (_loadError != null)
+{
+    <div class="zs-alert zs-alert-error">@_loadError</div>
+}
+else if (_plans == null)
+{
+    <p class="zs-empty">Loading subscriptions&hellip;</p>
+}
+else
+{
+    <div class="row g-3 mt-1">
+        @foreach (SubscriptionPlanResponse plan in _plans)
+        {
+            bool featured = plan.AccessTier == AccessTier.Unlimited && plan.BillingInterval == BillingInterval.Yearly;
+            <div class="col-sm-6 col-lg-3">
+                <div class="zs-plan @(featured ? "zs-plan-featured" : "")">
+                    @if (featured)
+                    {
+                        <div class="zs-badge zs-badge-yellow mb-2">Best value</div>
+                    }
+                    else
+                    {
+                        <div class="zs-badge zs-badge-blue mb-2">@plan.AccessTier</div>
+                    }
+                    <h4 class="mb-1">@TierLabel(plan.AccessTier)</h4>
+                    <div class="zs-price">&euro;@plan.Price.ToString("0.##")
+                        <small>/ @(plan.BillingInterval == BillingInterval.Monthly ? "month" : "year")</small>
+                    </div>
+                    <ul class="mt-3 text-muted" style="padding-left:1.1rem;">
+                        <li>@(plan.AccessTier == AccessTier.Unlimited ? "Unlimited sessions per week" : "Up to 2 sessions per week")</li>
+                        <li>@(plan.BillingInterval == BillingInterval.Monthly ? "Cancel any month" : "Fixed for one year")</li>
+                        <li>Access to all locations</li>
+                    </ul>
+                    <button class="btn btn-primary mt-auto" @onclick="@(() => StartSignup(plan.Id))">
+                        Choose this plan
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<SubscriptionPlanResponse>? _plans;
+    private string? _loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _plans = await SubscriptionClient.GetPlansAsync();
+        }
+        catch (Exception exception)
+        {
+            _loadError = $"Could not reach the ZeemanSport API. Is it running? ({exception.Message})";
+        }
+    }
+
+    private void StartSignup(int planId)
+    {
+        Navigation.NavigateTo($"signup?plan={planId}");
+    }
+
+    private static string TierLabel(AccessTier tier)
+    {
+        return tier == AccessTier.Unlimited ? "Unlimited" : "Twice a week";
+    }
+}

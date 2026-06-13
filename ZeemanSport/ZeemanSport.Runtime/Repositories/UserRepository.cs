@@ -13,6 +13,20 @@ namespace ZeemanSport.Runtime.Repositories
             _dataSource = dataSource;
         }
 
+        public async Task<IReadOnlyCollection<User>> GetAllAsync()
+        {
+            List<User> users = new List<User>();
+
+            await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync();
+            await using NpgsqlCommand command = new NpgsqlCommand("SELECT * FROM dbo.usp_get_users();", connection);
+            await using NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+                users.Add(MapUser(reader));
+
+            return users;
+        }
+
         public async Task<User?> GetByIdAsync(int id)
         {
             await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync();

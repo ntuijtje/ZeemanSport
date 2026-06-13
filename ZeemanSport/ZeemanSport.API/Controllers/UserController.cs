@@ -15,6 +15,14 @@ namespace ZeemanSport.API.Controllers
             _userService = userService;
         }
 
+        [HttpGet(Name = "GetUsers")]
+        public async Task<ActionResult<IReadOnlyCollection<UserResponse>>> Get()
+        {
+            IReadOnlyCollection<UserResponse> users = await _userService.GetAllAsync();
+
+            return Ok(users);
+        }
+
         [HttpPost("Login", Name = "LoginUser")]
         public async Task<ActionResult<UserResponse>> Login(LoginUserRequest request)
         {

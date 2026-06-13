@@ -1,0 +1,201 @@
+@page "/signup"
+@using System.ComponentModel.DataAnnotations
+@inject SubscriptionApiClient SubscriptionClient
+@inject UserApiClient UserClient
+
+<PageTitle>Become a member &mdash; ZeemanSport</PageTitle>
+
+<div class="zs-section-title">
+    <h1>Become a member</h1>
+</div>
+
+@if (_completed != null)
+{
+    <div class="zs-card" style="max-width:640px;">
+        <div class="zs-badge zs-badge-yellow mb-2">Payment confirmed</div>
+        <h3>Welcome aboard, @_model.FirstName!</h3>
+        <p class="text-muted">
+            Your <strong>@_completed.PlanName</strong> subscription is active from
+            <strong>@_completed.StartDate.ToString("d MMMM yyyy")</strong> until
+            <strong>@_completed.EndDate.ToString("d MMMM yyyy")</strong>.
+        </p>
+        <p class="text-muted mb-0">
+            A confirmation e-mail has been sent (simulated). Download the ZeemanSport app and sign in
+            with your new account to reserve lessons and manage your membership.
+        </p>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="zs-card">
+                @if (_error != null)
+                {
+                    <div class="zs-alert zs-alert-error">@_error</div>
+                }
+
+                <EditForm Model="_model" OnValidSubmit="SubmitAsync">
+                    <DataAnnotationsValidator />
+
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="zs-label">First name</label>
+                            <InputText class="form-control" @bind-Value="_model.FirstName" />
+                            <ValidationMessage For="@(() => _model.FirstName)" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="zs-label">Last name</label>
+                            <InputText class="form-control" @bind-Value="_model.LastName" />
+                            <ValidationMessage For="@(() => _model.LastName)" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="zs-label">Username</label>
+                            <InputText class="form-control" @bind-Value="_model.UserName" />
+                            <ValidationMessage For="@(() => _model.UserName)" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="zs-label">Password</label>
+                            <InputText type="password" class="form-control" @bind-Value="_model.Password" />
+                            <ValidationMessage For="@(() => _model.Password)" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="zs-label">Subscription</label>
+                            <InputSelect class="form-select" @bind-Value="_model.PlanId">
+                                <option value="0">Select a plan&hellip;</option>
+                                @if (_plans != null)
+                                {
+                                    @foreach (SubscriptionPlanResponse plan in _plans)
+                                    {
+                                        <option value="@plan.Id">@plan.Name (&euro;@plan.Price.ToString("0.##"))</option>
+                                    }
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => _model.PlanId)" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="zs-label">Start date</label>
+                            <InputDate class="form-control" @bind-Value="_model.StartDate" />
+                            <ValidationMessage For="@(() => _model.StartDate)" />
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-accent btn-lg mt-4" disabled="@_submitting">
+                        @(_submitting ? "Processing payment…" : "Pay with iDeal / Wero")
+                    </button>
+                </EditForm>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="zs-card">
+                <h4>Order summary</h4>
+                @if (SelectedPlan != null)
+                {
+                    <p class="mb-1 text-muted">@SelectedPlan.Name</p>
+                    <div class="zs-price">&euro;@SelectedPlan.Price.ToString("0.##")
+                        <small>/ @(SelectedPlan.BillingInterval == BillingInterval.Monthly ? "month" : "year")</small>
+                    </div>
+                    <hr />
+                    <p class="text-muted mb-0">
+                        Payment is simulated for this demo. No real charge is made.
+                    </p>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">Select a subscription to see the price.</p>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "plan")]
+    public int? PlanId { get; set; }
+
+    private readonly SignupModel _model = new();
+    private IReadOnlyList<SubscriptionPlanResponse>? _plans;
+    private SubscriptionResponse? _completed;
+    private string? _error;
+    private bool _submitting;
+
+    private SubscriptionPlanResponse? SelectedPlan =>
+        _plans?.FirstOrDefault(p => p.Id == _model.PlanId);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _plans = await SubscriptionClient.GetPlansAsync();
+        }
+        catch (Exception exception)
+        {
+            _error = $"Could not load subscriptions. Is the API running? ({exception.Message})";
+        }
+
+        if (PlanId.HasValue)
+            _model.PlanId = PlanId.Value;
+    }
+
+    private async Task SubmitAsync()
+    {
+        _error = null;
+        _submitting = true;
+
+        try
+        {
+            UserResponse? user = await UserClient.RegisterAsync(new RegisterUserRequest
+            {
+                FirstName = _model.FirstName,
+                LastName = _model.LastName,
+                UserName = _model.UserName,
+                Password = _model.Password,
+                UserRole = UserRole.Member
+            });
+
+            if (user == null)
+            {
+                _error = "Registration failed. Please try again.";
+                return;
+            }
+
+            _completed = await SubscriptionClient.PurchaseAsync(new CreateSubscriptionRequest
+            {
+                UserId = user.Id,
+                PlanId = _model.PlanId,
+                StartDate = _model.StartDate
+            });
+        }
+        catch (Exception)
+        {
+            _error = "We could not complete your registration. The username may already be taken.";
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    private class SignupModel
+    {
+        [Required]
+        public string? FirstName { get; set; }
+
+        [Required]
+        public string? LastName { get; set; }
+
+        [Required]
+        public string? UserName { get; set; }
+
+        [Required, MinLength(6, ErrorMessage = "Use at least 6 characters.")]
+        public string? Password { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Please select a subscription.")]
+        public int PlanId { get; set; }
+
+        [Required]
+        public DateTime StartDate { get; set; } = DateTime.Today;
+    }
+}

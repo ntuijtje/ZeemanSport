@@ -1,0 +1,130 @@
+@page "/schedule"
+@inject SessionApiClient SessionClient
+
+<PageTitle>Lessons &mdash; ZeemanSport</PageTitle>
+
+<div class="zs-section-title">
+    <h1>Lesson schedule</h1>
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-primary" @onclick="PreviousWeek">&laquo; Previous</button>
+        <strong>@_weekStart.ToString("d MMM") &ndash; @_weekStart.AddDays(6).ToString("d MMM yyyy")</strong>
+        <button class="btn btn-outline-primary" @onclick="NextWeek">Next &raquo;</button>
+    </div>
+</div>
+
+@if (_loadError != null)
+{
+    <div class="zs-alert zs-alert-error">@_loadError</div>
+}
+else if (_sessions == null)
+{
+    <p class="zs-empty">Loading schedule&hellip;</p>
+}
+else
+{
+    @for (int dayOffset = 0; dayOffset < 7; dayOffset++)
+    {
+        DateTime day = _weekStart.AddDays(dayOffset);
+        List<SessionResponse> daySessions = _sessions.Where(s => s.StartTime.Date == day.Date).OrderBy(s => s.StartTime).ToList();
+
+        <div class="zs-card mb-3">
+            <h4 class="mb-3">@day.ToString("dddd d MMMM")</h4>
+            @if (daySessions.Count == 0)
+            {
+                <p class="text-muted mb-0">No lessons scheduled.</p>
+            }
+            else
+            {
+                <table class="zs-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Class</th>
+                            <th>Location</th>
+                            <th>Instructor</th>
+                            <th>Availability</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (SessionResponse session in daySessions)
+                        {
+                            bool full = session.ReservedCount >= session.Capacity;
+                            <tr>
+                                <td>@session.StartTime.ToString("HH:mm") &ndash; @session.StartTime.AddMinutes(session.DurationMinutes).ToString("HH:mm")</td>
+                                <td><strong>@session.WorkoutName</strong></td>
+                                <td>@session.LocationName</td>
+                                <td>@(string.IsNullOrWhiteSpace(session.InstructorName) ? "TBA" : session.InstructorName)</td>
+                                <td>
+                                    @if (full)
+                                    {
+                                        <span class="zs-badge zs-badge-full">Full</span>
+                                    }
+                                    else
+                                    {
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="zs-meter"><span style="width:@(OccupancyPercent(session))%"></span></div>
+                                            <small class="text-muted">@session.ReservedCount / @session.Capacity</small>
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    }
+}
+
+@code {
+    private DateTime _weekStart = GetWeekStart(DateTime.Today);
+    private IReadOnlyList<SessionResponse>? _sessions;
+    private string? _loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _sessions = null;
+        _loadError = null;
+
+        try
+        {
+            _sessions = await SessionClient.GetScheduleAsync(_weekStart, _weekStart.AddDays(7));
+        }
+        catch (Exception exception)
+        {
+            _loadError = $"Could not reach the ZeemanSport API. Is it running? ({exception.Message})";
+        }
+    }
+
+    private async Task PreviousWeek()
+    {
+        _weekStart = _weekStart.AddDays(-7);
+        await LoadAsync();
+    }
+
+    private async Task NextWeek()
+    {
+        _weekStart = _weekStart.AddDays(7);
+        await LoadAsync();
+    }
+
+    private static int OccupancyPercent(SessionResponse session)
+    {
+        if (session.Capacity <= 0)
+            return 0;
+
+        return Math.Min(100, (int)(100.0 * session.ReservedCount / session.Capacity));
+    }
+
+    private static DateTime GetWeekStart(DateTime date)
+    {
+        int diff = (7 + (int)date.DayOfWeek - (int)DayOfWeek.Monday) % 7;
+
+        return date.Date.AddDays(-diff);
+    }
+}

@@ -21,6 +21,12 @@ namespace ZeemanSport.API
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
 
+            // Allow the Blazor WASM client (and any browser origin during development) to call the API.
+            const string BlazorCorsPolicy = "BlazorClient";
+            builder.Services.AddCors(options =>
+                options.AddPolicy(BlazorCorsPolicy, policy =>
+                    policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+
             builder.Services.AddControllers()
                 .AddJsonOptions(options =>
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -61,6 +67,8 @@ namespace ZeemanSport.API
                 app.MapOpenApi();
 
             app.UseHttpsRedirection();
+
+            app.UseCors(BlazorCorsPolicy);
 
             app.UseAuthorization();
 

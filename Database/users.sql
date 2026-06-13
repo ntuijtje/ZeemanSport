@@ -10,6 +10,30 @@ CREATE TABLE IF NOT EXISTS dbo.users
     password_hash text NOT NULL
 );
 
+CREATE OR REPLACE FUNCTION dbo.usp_get_users()
+RETURNS TABLE
+(
+    id integer,
+    user_name varchar,
+    first_name varchar,
+    last_name varchar,
+    user_role integer
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        users.id,
+        users.user_name,
+        users.first_name,
+        users.last_name,
+        users.user_role
+    FROM dbo.users
+    ORDER BY users.user_name;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION dbo.usp_get_user_by_id(p_id integer)
 RETURNS TABLE
 (

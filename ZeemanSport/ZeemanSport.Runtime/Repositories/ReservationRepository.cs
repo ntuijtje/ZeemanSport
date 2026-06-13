@@ -232,7 +232,7 @@ namespace ZeemanSport.Runtime.Repositories
                 Id = reader.GetInt32(reader.GetOrdinal("id")),
                 SessionId = reader.GetInt32(reader.GetOrdinal("session_id")),
                 UserId = reader.GetInt32(reader.GetOrdinal("user_id")),
-                Position = reader.GetInt32(reader.GetOrdinal("position")),
+                Position = reader.GetInt32(reader.GetOrdinal("queue_position")),
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("created_at"))
             };
         }

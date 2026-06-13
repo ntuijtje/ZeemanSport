@@ -6,6 +6,7 @@ namespace ZeemanSport.Core.User
 {
     public interface IUserRepository
     {
+        Task<IReadOnlyCollection<User>> GetAllAsync();
         Task<User> GetByIdAsync(int id);
         Task<User> GetByUserNameAsync(string userName);
         Task<User> CreateAsync(User user, string password);

@@ -15,6 +15,13 @@ namespace ZeemanSport.Runtime.Services
             _userRepository = userRepository;
         }
 
+        public async Task<IReadOnlyCollection<UserResponse>> GetAllAsync()
+        {
+            IReadOnlyCollection<User> users = await _userRepository.GetAllAsync();
+
+            return users.Select(mapToResponse).ToArray();
+        }
+
         public async Task<UserResponse?> LoginAsync(LoginUserRequest request)
         {
             User user = await _userRepository.GetByUserNameAsync(request.UserName);

@@ -1,0 +1,349 @@
+/* ZeemanSport brand theme: white base, blue primary, yellow highlights. */
+:root {
+    --zs-blue: #015EA9;
+    --zs-blue-dark: #014a85;
+    --zs-blue-soft: #e6f1fa;
+    --zs-yellow: #FFDA02;
+    --zs-ink: #11324a;
+    --zs-muted: #5b7488;
+    --zs-border: #d9e6f1;
+    --bs-primary: #015EA9;
+    --bs-primary-rgb: 1, 94, 169;
+}
+
+html, body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--zs-ink);
+    background-color: #f6f9fc;
+}
+
+a, .btn-link {
+    color: var(--zs-blue);
+}
+
+a:hover {
+    color: var(--zs-blue-dark);
+}
+
+h1, h2, h3, h4 {
+    color: var(--zs-blue);
+    font-weight: 700;
+}
+
+/* ---------- Layout ---------- */
+.zs-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.zs-header {
+    background: #fff;
+    border-bottom: 3px solid var(--zs-yellow);
+    box-shadow: 0 2px 10px rgba(1, 94, 169, 0.08);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.zs-header-inner {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.6rem 1.25rem;
+}
+
+.zs-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+}
+
+.zs-brand img {
+    height: 54px;
+    width: auto;
+}
+
+.zs-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-left: auto;
+    align-items: center;
+}
+
+.zs-nav .nav-link {
+    color: var(--zs-ink);
+    font-weight: 600;
+    padding: 0.45rem 0.85rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.zs-nav .nav-link:hover {
+    background: var(--zs-blue-soft);
+    color: var(--zs-blue);
+}
+
+.zs-nav .nav-link.active {
+    background: var(--zs-blue);
+    color: #fff;
+}
+
+.zs-nav-sep {
+    width: 1px;
+    height: 24px;
+    background: var(--zs-border);
+    margin: 0 0.4rem;
+}
+
+.zs-nav-badge {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--zs-yellow);
+    color: var(--zs-ink);
+    border-radius: 0.4rem;
+    padding: 0.05rem 0.35rem;
+    margin-left: 0.3rem;
+    font-weight: 800;
+}
+
+.zs-main {
+    flex: 1;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.75rem 1.25rem 3rem;
+}
+
+.zs-footer {
+    background: var(--zs-blue);
+    color: #fff;
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.9rem;
+}
+
+.zs-footer a {
+    color: var(--zs-yellow);
+}
+
+/* ---------- Hero ---------- */
+.zs-hero {
+    background: linear-gradient(135deg, var(--zs-blue) 0%, var(--zs-blue-dark) 100%);
+    color: #fff;
+    border-radius: 1rem;
+    padding: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.zs-hero h1 {
+    color: #fff;
+    font-size: 2.4rem;
+}
+
+.zs-hero p {
+    color: #d7e8f6;
+    font-size: 1.1rem;
+    max-width: 38rem;
+}
+
+.zs-hero img {
+    height: 170px;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.25));
+}
+
+/* ---------- Cards ---------- */
+.zs-card {
+    background: #fff;
+    border: 1px solid var(--zs-border);
+    border-radius: 0.85rem;
+    box-shadow: 0 2px 12px rgba(1, 94, 169, 0.06);
+    padding: 1.25rem 1.4rem;
+}
+
+.zs-section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+    flex-wrap: wrap;
+}
+
+/* Subscription plan cards */
+.zs-plan {
+    border: 1px solid var(--zs-border);
+    border-radius: 0.85rem;
+    background: #fff;
+    padding: 1.4rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.zs-plan:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(1, 94, 169, 0.14);
+}
+
+.zs-plan.zs-plan-featured {
+    border: 2px solid var(--zs-yellow);
+}
+
+.zs-plan .zs-price {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--zs-blue);
+}
+
+.zs-plan .zs-price small {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--zs-muted);
+}
+
+/* ---------- Buttons ---------- */
+.btn-primary {
+    background-color: var(--zs-blue);
+    border-color: var(--zs-blue);
+    color: #fff;
+}
+
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+    background-color: var(--zs-blue-dark) !important;
+    border-color: var(--zs-blue-dark) !important;
+}
+
+.btn-outline-primary {
+    color: var(--zs-blue);
+    border-color: var(--zs-blue);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--zs-blue);
+    border-color: var(--zs-blue);
+    color: #fff;
+}
+
+.btn-accent {
+    background-color: var(--zs-yellow);
+    border-color: var(--zs-yellow);
+    color: var(--zs-ink);
+    font-weight: 700;
+}
+
+.btn-accent:hover {
+    background-color: #e6c500;
+    border-color: #e6c500;
+    color: var(--zs-ink);
+}
+
+/* ---------- Tables ---------- */
+.zs-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 0.6rem;
+    overflow: hidden;
+}
+
+.zs-table th {
+    background: var(--zs-blue);
+    color: #fff;
+    text-align: left;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.zs-table td {
+    padding: 0.6rem 0.85rem;
+    border-top: 1px solid var(--zs-border);
+    vertical-align: middle;
+}
+
+.zs-table tbody tr:hover {
+    background: var(--zs-blue-soft);
+}
+
+/* ---------- Badges ---------- */
+.zs-badge {
+    display: inline-block;
+    border-radius: 1rem;
+    padding: 0.15rem 0.6rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.zs-badge-blue { background: var(--zs-blue-soft); color: var(--zs-blue); }
+.zs-badge-yellow { background: var(--zs-yellow); color: var(--zs-ink); }
+.zs-badge-grey { background: #eef2f6; color: var(--zs-muted); }
+.zs-badge-full { background: #fde2e1; color: #b3261e; }
+
+/* Occupancy meter */
+.zs-meter {
+    height: 8px;
+    border-radius: 4px;
+    background: #e9eef3;
+    overflow: hidden;
+    min-width: 90px;
+}
+
+.zs-meter > span {
+    display: block;
+    height: 100%;
+    background: var(--zs-blue);
+}
+
+.zs-meter.zs-meter-full > span {
+    background: #d9534f;
+}
+
+/* ---------- Forms ---------- */
+.form-control:focus, .form-select:focus {
+    border-color: var(--zs-blue);
+    box-shadow: 0 0 0 0.2rem rgba(1, 94, 169, 0.15);
+}
+
+label.zs-label {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.zs-alert {
+    border-radius: 0.6rem;
+    padding: 0.7rem 1rem;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.zs-alert-error { background: #fde2e1; color: #b3261e; }
+.zs-alert-success { background: #e3f5e9; color: #1c7d44; }
+
+/* Loading spinner colour from template */
+.loading-progress circle:last-child {
+    stroke: var(--zs-blue);
+}
+
+.zs-empty {
+    text-align: center;
+    color: var(--zs-muted);
+    padding: 2rem;
+}
+
+@media (max-width: 640px) {
+    .zs-hero { padding: 1.5rem; }
+    .zs-hero img { height: 110px; }
+}

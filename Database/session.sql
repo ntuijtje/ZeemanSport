@@ -12,9 +12,6 @@ CREATE TABLE IF NOT EXISTS dbo.sessions
 CREATE INDEX IF NOT EXISTS ix_sessions_start_time ON dbo.sessions(start_time);
 CREATE INDEX IF NOT EXISTS ix_sessions_instructor_id ON dbo.sessions(instructor_id);
 
--- Returns a fully enriched session row (names, capacity, seat dimensions and live occupancy
--- counts). reserved_count/waitlist_count read from the reservation tables (see reservation.sql),
--- which is why the whole schema must be applied before the API queries run.
 CREATE OR REPLACE FUNCTION dbo.usp_get_session_rows(p_id integer, p_instructor_id integer, p_from timestamp, p_to timestamp)
 RETURNS TABLE
 (

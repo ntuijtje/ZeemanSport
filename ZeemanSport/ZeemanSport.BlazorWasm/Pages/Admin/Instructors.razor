@@ -1,0 +1,199 @@
+@page "/admin/instructors"
+@using System.ComponentModel.DataAnnotations
+@inject InstructorApiClient InstructorClient
+
+<PageTitle>Instructors &mdash; ZeemanSport admin</PageTitle>
+
+<div class="zs-section-title">
+    <h1>Instructors</h1>
+    <button class="btn btn-primary" @onclick="StartCreate">+ New instructor</button>
+</div>
+<p class="text-muted">Add the people who teach the classes. An instructor can be left unassigned (TBA) on a lesson.</p>
+
+@if (_error != null)
+{
+    <div class="zs-alert zs-alert-error">@_error</div>
+}
+
+@if (_editing != null)
+{
+    <div class="zs-card mb-3">
+        <h4>@(_editingId == null ? "New instructor" : "Edit instructor")</h4>
+        <EditForm Model="_editing" OnValidSubmit="SaveAsync">
+            <DataAnnotationsValidator />
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="zs-label">Name</label>
+                    <InputText class="form-control" @bind-Value="_editing.Name" />
+                    <ValidationMessage For="@(() => _editing.Name)" />
+                </div>
+                <div class="col-md-6">
+                    <label class="zs-label">Photo URL</label>
+                    <InputText class="form-control" @bind-Value="_editing.PhotoUrl" placeholder="https://…" />
+                </div>
+                <div class="col-md-2 d-flex align-items-center">
+                    <label class="zs-label mb-0">
+                        <InputCheckbox @bind-Value="_editing.IsActive" /> Active
+                    </label>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-outline-primary ms-2" @onclick="CancelEdit">Cancel</button>
+            </div>
+        </EditForm>
+    </div>
+}
+
+@if (_instructors == null && _error == null)
+{
+    <p class="zs-empty">Loading&hellip;</p>
+}
+else if (_instructors != null)
+{
+    <table class="zs-table">
+        <thead>
+            <tr>
+                <th style="width:64px;"></th>
+                <th>Name</th>
+                <th>Status</th>
+                <th style="width:160px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (InstructorResponse instructor in _instructors)
+            {
+                <tr>
+                    <td>
+                        @if (!string.IsNullOrWhiteSpace(instructor.PhotoUrl))
+                        {
+                            <img src="@instructor.PhotoUrl" alt="@instructor.Name" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" />
+                        }
+                    </td>
+                    <td><strong>@instructor.Name</strong></td>
+                    <td>
+                        @if (instructor.IsActive)
+                        {
+                            <span class="zs-badge zs-badge-blue">Active</span>
+                        }
+                        else
+                        {
+                            <span class="zs-badge zs-badge-grey">Inactive</span>
+                        }
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="@(() => StartEdit(instructor))">Edit</button>
+                        <button class="btn btn-sm btn-outline-danger ms-1" @onclick="@(() => DeleteAsync(instructor))">Delete</button>
+                    </td>
+                </tr>
+            }
+            @if (_instructors.Count == 0)
+            {
+                <tr><td colspan="4" class="zs-empty">No instructors yet.</td></tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IReadOnlyList<InstructorResponse>? _instructors;
+    private InstructorModel? _editing;
+    private int? _editingId;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _instructors = await InstructorClient.GetAllAsync();
+            _error = null;
+        }
+        catch (Exception exception)
+        {
+            _error = $"Could not reach the API. Is it running? ({exception.Message})";
+        }
+    }
+
+    private void StartCreate()
+    {
+        _editingId = null;
+        _editing = new InstructorModel { IsActive = true };
+    }
+
+    private void StartEdit(InstructorResponse instructor)
+    {
+        _editingId = instructor.Id;
+        _editing = new InstructorModel
+        {
+            Name = instructor.Name,
+            PhotoUrl = instructor.PhotoUrl,
+            IsActive = instructor.IsActive
+        };
+    }
+
+    private void CancelEdit()
+    {
+        _editing = null;
+        _editingId = null;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_editing == null)
+            return;
+
+        try
+        {
+            if (_editingId == null)
+            {
+                await InstructorClient.CreateAsync(new CreateInstructorRequest
+                {
+                    Name = _editing.Name,
+                    PhotoUrl = _editing.PhotoUrl
+                });
+            }
+            else
+            {
+                await InstructorClient.UpdateAsync(_editingId.Value, new UpdateInstructorRequest
+                {
+                    Name = _editing.Name,
+                    PhotoUrl = _editing.PhotoUrl,
+                    IsActive = _editing.IsActive
+                });
+            }
+
+            CancelEdit();
+            await LoadAsync();
+        }
+        catch (Exception exception)
+        {
+            _error = $"Saving failed: {exception.Message}";
+        }
+    }
+
+    private async Task DeleteAsync(InstructorResponse instructor)
+    {
+        try
+        {
+            await InstructorClient.DeleteAsync(instructor.Id);
+            await LoadAsync();
+        }
+        catch (Exception exception)
+        {
+            _error = $"Delete failed: {exception.Message}";
+        }
+    }
+
+    private class InstructorModel
+    {
+        [Required]
+        public string? Name { get; set; }
+        public string? PhotoUrl { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+}

@@ -1,0 +1,320 @@
+@page "/admin/sessions"
+@using System.ComponentModel.DataAnnotations
+@inject SessionApiClient SessionClient
+@inject WorkoutApiClient WorkoutClient
+@inject InstructorApiClient InstructorClient
+@inject LocationApiClient LocationClient
+
+<PageTitle>Planning &mdash; ZeemanSport admin</PageTitle>
+
+<div class="zs-section-title">
+    <h1>Lesson planning</h1>
+    <button class="btn btn-primary" @onclick="ToggleCreate">@(_showCreate ? "Close form" : "+ Plan lessons")</button>
+</div>
+<p class="text-muted">Plan a lesson once or on a repeating schedule, and review occupancy of past and upcoming lessons.</p>
+
+@if (_error != null)
+{
+    <div class="zs-alert zs-alert-error">@_error</div>
+}
+@if (_message != null)
+{
+    <div class="zs-alert zs-alert-success">@_message</div>
+}
+
+@if (_showCreate)
+{
+    <div class="zs-card mb-3">
+        <h4>Plan lessons</h4>
+        <EditForm Model="_model" OnValidSubmit="CreateAsync">
+            <DataAnnotationsValidator />
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="zs-label">Workout</label>
+                    <InputSelect class="form-select" @bind-Value="_model.WorkoutId">
+                        <option value="0">Select&hellip;</option>
+                        @if (_workouts != null)
+                        {
+                            @foreach (WorkoutResponse workout in _workouts)
+                            {
+                                <option value="@workout.Id">@workout.Name</option>
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => _model.WorkoutId)" />
+                </div>
+                <div class="col-md-4">
+                    <label class="zs-label">Instructor</label>
+                    <InputSelect class="form-select" @bind-Value="_model.InstructorId">
+                        <option value="0">TBA (not yet known)</option>
+                        @if (_instructors != null)
+                        {
+                            @foreach (InstructorResponse instructor in _instructors)
+                            {
+                                <option value="@instructor.Id">@instructor.Name</option>
+                            }
+                        }
+                    </InputSelect>
+                </div>
+                <div class="col-md-4">
+                    <label class="zs-label">Location</label>
+                    <InputSelect class="form-select" @bind-Value="_model.LocationId">
+                        <option value="0">Select&hellip;</option>
+                        @if (_locations != null)
+                        {
+                            @foreach (LocationResponse location in _locations)
+                            {
+                                <option value="@location.Id">@location.Name (cap. @location.Capacity)</option>
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => _model.LocationId)" />
+                </div>
+                <div class="col-md-4">
+                    <label class="zs-label">Start (date &amp; time)</label>
+                    <InputDate Type="InputDateType.DateTimeLocal" class="form-control" @bind-Value="_model.StartTime" />
+                </div>
+                <div class="col-md-2">
+                    <label class="zs-label">Duration (min)</label>
+                    <InputNumber class="form-control" @bind-Value="_model.DurationMinutes" />
+                    <ValidationMessage For="@(() => _model.DurationMinutes)" />
+                </div>
+                <div class="col-md-3">
+                    <label class="zs-label">Repeat</label>
+                    <InputSelect class="form-select" @bind-Value="_model.RecurrenceType">
+                        @foreach (RecurrenceType recurrence in Enum.GetValues<RecurrenceType>())
+                        {
+                            <option value="@recurrence">@RecurrenceLabel(recurrence)</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+
+            @if (_model.RecurrenceType != RecurrenceType.None)
+            {
+                <div class="row g-3 mt-1">
+                    <div class="col-md-4">
+                        <label class="zs-label">Repeat until (optional)</label>
+                        <InputDate class="form-control" @bind-Value="_model.RepeatUntil" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="zs-label">Or number of times (optional)</label>
+                        <InputNumber class="form-control" @bind-Value="_model.RepeatCount" />
+                    </div>
+                </div>
+                <p class="text-muted mt-2 mb-0"><small>Provide an end date or a number of repetitions. If neither is set, a default cap applies.</small></p>
+            }
+
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary" disabled="@_saving">@(_saving ? "Planning…" : "Plan")</button>
+            </div>
+        </EditForm>
+    </div>
+}
+
+<div class="zs-section-title">
+    <h2>Schedule</h2>
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-primary" @onclick="PreviousWeek">&laquo; Previous</button>
+        <strong>@_weekStart.ToString("d MMM") &ndash; @_weekStart.AddDays(6).ToString("d MMM yyyy")</strong>
+        <button class="btn btn-outline-primary" @onclick="NextWeek">Next &raquo;</button>
+    </div>
+</div>
+
+@if (_sessions == null && _error == null)
+{
+    <p class="zs-empty">Loading&hellip;</p>
+}
+else if (_sessions != null)
+{
+    <table class="zs-table">
+        <thead>
+            <tr>
+                <th>Day &amp; time</th>
+                <th>Class</th>
+                <th>Location</th>
+                <th>Instructor</th>
+                <th>Occupancy</th>
+                <th>Waitlist</th>
+                <th style="width:90px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (SessionResponse session in _sessions.OrderBy(s => s.StartTime))
+            {
+                bool full = session.ReservedCount >= session.Capacity;
+                <tr>
+                    <td>@session.StartTime.ToString("ddd d MMM, HH:mm")</td>
+                    <td><strong>@session.WorkoutName</strong></td>
+                    <td>@session.LocationName</td>
+                    <td>@(string.IsNullOrWhiteSpace(session.InstructorName) ? "TBA" : session.InstructorName)</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="zs-meter @(full ? "zs-meter-full" : "")"><span style="width:@(OccupancyPercent(session))%"></span></div>
+                            <small class="text-muted">@session.ReservedCount / @session.Capacity</small>
+                        </div>
+                    </td>
+                    <td>@session.WaitlistCount</td>
+                    <td><button class="btn btn-sm btn-outline-danger" @onclick="@(() => DeleteAsync(session))">Delete</button></td>
+                </tr>
+            }
+            @if (_sessions.Count == 0)
+            {
+                <tr><td colspan="7" class="zs-empty">No lessons in this week.</td></tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private DateTime _weekStart = GetWeekStart(DateTime.Today);
+    private IReadOnlyList<SessionResponse>? _sessions;
+    private IReadOnlyList<WorkoutResponse>? _workouts;
+    private IReadOnlyList<InstructorResponse>? _instructors;
+    private IReadOnlyList<LocationResponse>? _locations;
+
+    private readonly SessionModel _model = new();
+    private bool _showCreate;
+    private bool _saving;
+    private string? _error;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _workouts = await WorkoutClient.GetAllAsync();
+            _instructors = await InstructorClient.GetAllAsync();
+            _locations = await LocationClient.GetAllAsync();
+        }
+        catch (Exception exception)
+        {
+            _error = $"Could not load reference data. Is the API running? ({exception.Message})";
+        }
+
+        await LoadScheduleAsync();
+    }
+
+    private async Task LoadScheduleAsync()
+    {
+        try
+        {
+            _sessions = await SessionClient.GetScheduleAsync(_weekStart, _weekStart.AddDays(7));
+            if (_error?.StartsWith("Could not load reference") != true)
+                _error = null;
+        }
+        catch (Exception exception)
+        {
+            _error = $"Could not load the schedule. ({exception.Message})";
+        }
+    }
+
+    private void ToggleCreate()
+    {
+        _showCreate = !_showCreate;
+        _message = null;
+    }
+
+    private async Task CreateAsync()
+    {
+        _saving = true;
+        _error = null;
+        _message = null;
+
+        try
+        {
+            IReadOnlyList<SessionResponse> created = await SessionClient.CreateAsync(new CreateSessionRequest
+            {
+                WorkoutId = _model.WorkoutId,
+                InstructorId = _model.InstructorId > 0 ? _model.InstructorId : null,
+                LocationId = _model.LocationId,
+                StartTime = _model.StartTime,
+                DurationMinutes = _model.DurationMinutes,
+                RecurrenceType = _model.RecurrenceType,
+                RepeatUntil = _model.RepeatUntil,
+                RepeatCount = _model.RepeatCount
+            });
+
+            _message = $"Planned {created.Count} lesson(s).";
+            _showCreate = false;
+            await LoadScheduleAsync();
+        }
+        catch (Exception exception)
+        {
+            _error = $"Planning failed: {exception.Message}";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task DeleteAsync(SessionResponse session)
+    {
+        try
+        {
+            await SessionClient.DeleteAsync(session.Id);
+            await LoadScheduleAsync();
+        }
+        catch (Exception exception)
+        {
+            _error = $"Delete failed: {exception.Message}";
+        }
+    }
+
+    private async Task PreviousWeek()
+    {
+        _weekStart = _weekStart.AddDays(-7);
+        await LoadScheduleAsync();
+    }
+
+    private async Task NextWeek()
+    {
+        _weekStart = _weekStart.AddDays(7);
+        await LoadScheduleAsync();
+    }
+
+    private static int OccupancyPercent(SessionResponse session)
+    {
+        if (session.Capacity <= 0)
+            return 0;
+
+        return Math.Min(100, (int)(100.0 * session.ReservedCount / session.Capacity));
+    }
+
+    private static string RecurrenceLabel(RecurrenceType recurrence) => recurrence switch
+    {
+        RecurrenceType.None => "Once",
+        RecurrenceType.Daily => "Every day",
+        RecurrenceType.Weekly => "Every week",
+        RecurrenceType.Monthly => "Every month",
+        _ => recurrence.ToString()
+    };
+
+    private static DateTime GetWeekStart(DateTime date)
+    {
+        int diff = (7 + (int)date.DayOfWeek - (int)DayOfWeek.Monday) % 7;
+
+        return date.Date.AddDays(-diff);
+    }
+
+    private class SessionModel
+    {
+        [Range(1, int.MaxValue, ErrorMessage = "Select a workout.")]
+        public int WorkoutId { get; set; }
+
+        public int InstructorId { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Select a location.")]
+        public int LocationId { get; set; }
+
+        public DateTime StartTime { get; set; } = DateTime.Today.AddHours(18);
+
+        [Range(5, 240, ErrorMessage = "Enter a duration between 5 and 240 minutes.")]
+        public int DurationMinutes { get; set; } = 60;
+
+        public RecurrenceType RecurrenceType { get; set; } = RecurrenceType.None;
+        public DateTime? RepeatUntil { get; set; }
+        public int? RepeatCount { get; set; }
+    }
+}
