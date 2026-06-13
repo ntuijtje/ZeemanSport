@@ -45,8 +45,7 @@ BEGIN
         UPDATE dbo.workouts w
         SET name = p_name,
             description = p_description,
-            is_active = p_is_active,
-            updated_at = current_timestamp
+            is_active = p_is_active
         WHERE w.id = p_id
         RETURNING w.id INTO saved_id;
     END IF;

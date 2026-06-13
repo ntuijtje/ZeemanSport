@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS dbo.locations
 );
 
 CREATE OR REPLACE FUNCTION dbo.usp_get_locations()
-RETURNS TABLE(id integer, name varchar, location_type integer, capacity integer, width_in_seats boolean, height_in_seats boolean, is_active boolean)
+RETURNS TABLE(id integer, name varchar, location_type integer, capacity integer, width_in_seats integer, height_in_seats integer, is_active boolean)
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -22,7 +22,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION dbo.usp_get_location_by_id(p_id integer)
-RETURNS TABLE(id integer, name varchar, location_type integer, capacity integer, width_in_seats boolean, height_in_seats boolean, is_active boolean)
+RETURNS TABLE(id integer, name varchar, location_type integer, capacity integer, width_in_seats integer, height_in_seats integer, is_active boolean)
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -39,11 +39,11 @@ CREATE OR REPLACE FUNCTION dbo.usp_save_location
     p_name varchar,
     p_location_type integer,
     p_capacity integer,
-    p_width_in_seats boolean,
-    p_height_in_seats boolean,
+    p_width_in_seats integer,
+    p_height_in_seats integer,
     p_is_active boolean
 )
-RETURNS TABLE(id integer, name varchar, location_type integer, capacity integer, width_in_seats boolean, height_in_seats boolean, is_active boolean)
+RETURNS TABLE(id integer, name varchar, location_type integer, capacity integer, width_in_seats integer, height_in_seats integer, is_active boolean)
 LANGUAGE plpgsql
 AS $$
 DECLARE
